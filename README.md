@@ -31,7 +31,7 @@ This project implements a simplified version of a Redis-like server in Go, provi
 3. Build the server:
 
    ```bash
-   go build -o redis-server cmd/server/main.go
+   go build
    ```
 
 ### Usage
@@ -39,7 +39,7 @@ This project implements a simplified version of a Redis-like server in Go, provi
 1. Start the server:
 
    ```bash
-   ./redis-server
+   ./redis-like-server
    ```
 
 2. The server will start listening on port `6379`.
