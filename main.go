@@ -23,43 +23,30 @@ func main() {
 	}
 	defer aof.Close()
 
-	aof.Read(func(value Value) {
-		command := strings.ToUpper(value.array[0].bulk)
-		args := value.array[1:]
-
-		handler, ok := Handlers[command]
-		if !ok {
-			fmt.Println("Invalid command: ", command)
-			return
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println(err)
+			continue
 		}
 
-		handler(args)
-	})
-
-	// Listen for connections
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println(err)
-		return
+		go handleConnection(conn, aof)
 	}
+}
 
+func handleConnection(conn net.Conn, aof *Aof) {
 	defer conn.Close()
 
+	resp := NewResp(conn)
 	for {
-		resp := NewResp(conn)
 		value, err := resp.Read()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		if value.typ != "array" {
-			fmt.Println("Invalid request, expected array")
-			continue
-		}
-
-		if len(value.array) == 0 {
-			fmt.Println("Invalid request, expected array length > 0")
+		if value.typ != "array" || len(value.array) == 0 {
+			fmt.Println("Invalid request")
 			continue
 		}
 
@@ -70,13 +57,16 @@ func main() {
 
 		handler, ok := Handlers[command]
 		if !ok {
-			fmt.Println("Invalid command: ", command)
+			fmt.Println("Invalid command:", command)
 			writer.Write(Value{typ: "string", str: ""})
 			continue
 		}
 
 		if command == "SET" || command == "HSET" {
-			aof.Write(value)
+			if err := aof.Write(value); err != nil {
+				fmt.Println("Failed to write to AOF:", err)
+				continue
+			}
 		}
 
 		result := handler(args)
