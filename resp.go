@@ -27,10 +27,12 @@ type Resp struct {
 	reader *bufio.Reader
 }
 
+// Initializes a new Resp struct.
 func NewResp(rd io.Reader) *Resp {
 	return &Resp{reader: bufio.NewReader(rd)}
 }
 
+// Reads a line from the reader until it encounters a '\r' (carriage return) character.
 func (r *Resp) readLine() (line []byte, n int, err error) {
 	for {
 		b, err := r.reader.ReadByte()
@@ -43,9 +45,11 @@ func (r *Resp) readLine() (line []byte, n int, err error) {
 			break
 		}
 	}
+	// return the line without the last 2 bytes, which are ‘\r\n’
 	return line[:len(line)-2], n, nil
 }
 
+// Reads an integer value from the reader.
 func (r *Resp) readInteger() (x int, n int, err error) {
 	line, n, err := r.readLine()
 	if err != nil {
@@ -58,6 +62,7 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 	return int(i64), n, nil
 }
 
+// Reads a RESP value from the reader
 func (r *Resp) Read() (Value, error) {
 	_type, err := r.reader.ReadByte()
 
@@ -76,6 +81,7 @@ func (r *Resp) Read() (Value, error) {
 	}
 }
 
+// Reads an array value from the reader
 func (r *Resp) readArray() (Value, error) {
 	v := Value{}
 	v.typ = "array"
@@ -101,11 +107,13 @@ func (r *Resp) readArray() (Value, error) {
 	return v, nil
 }
 
+// Reads a bulk value from the reader
 func (r *Resp) readBulk() (Value, error) {
 	v := Value{}
 
 	v.typ = "bulk"
 
+	// Read the integer that represents the number of bytes in the bulk string.
 	len, _, err := r.readInteger()
 	if err != nil {
 		return v, err
@@ -113,6 +121,7 @@ func (r *Resp) readBulk() (Value, error) {
 
 	bulk := make([]byte, len)
 
+	// Read the bulk string, followed by the ‘\r\n’ that indicates the end of the bulk string
 	r.reader.Read(bulk)
 
 	v.bulk = string(bulk)
@@ -123,6 +132,7 @@ func (r *Resp) readBulk() (Value, error) {
 	return v, nil
 }
 
+// Marshals a Value struct into its RESP representation
 func (v Value) Marshal() []byte {
 	switch v.typ {
 	case "array":
@@ -187,8 +197,7 @@ func (v Value) marshallNull() []byte {
 	return []byte("$-1\r\n")
 }
 
-// Writer
-
+// Represents a RESP protocol serializer
 type Writer struct {
 	writer io.Writer
 }
@@ -197,6 +206,7 @@ func NewWriter(w io.Writer) *Writer {
 	return &Writer{writer: w}
 }
 
+// Writes a Value struct to the writer after marshaling it
 func (w *Writer) Write(v Value) error {
 	var bytes = v.Marshal()
 
