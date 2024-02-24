@@ -1,4 +1,4 @@
-package main
+package internal
 
 import "sync"
 
@@ -13,10 +13,10 @@ var Handlers = map[string]func([]Value) Value{
 
 func ping(args []Value) Value {
 	if len(args) == 0 {
-		return Value{typ: "string", str: "RUPASINGHE"}
+		return Value{Typ: "string", Str: "RUPASINGHE"}
 	}
 
-	return Value{typ: "string", str: args[0].bulk}
+	return Value{Typ: "string", Str: args[0].Bulk}
 }
 
 var SETs = map[string]string{}
@@ -24,35 +24,35 @@ var SETsMu = sync.RWMutex{}
 
 func set(args []Value) Value {
 	if len(args) != 2 {
-		return Value{typ: "error", str: "ERR wrong number of arguments for 'set' command"}
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'set' command"}
 	}
 
-	key := args[0].bulk
-	value := args[1].bulk
+	key := args[0].Bulk
+	value := args[1].Bulk
 
 	SETsMu.Lock()
 	SETs[key] = value
 	SETsMu.Unlock()
 
-	return Value{typ: "string", str: "OK"}
+	return Value{Typ: "string", Str: "OK"}
 }
 
 func get(args []Value) Value {
 	if len(args) != 1 {
-		return Value{typ: "error", str: "ERR wrong number of arguments for 'get' command"}
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'get' command"}
 	}
 
-	key := args[0].bulk
+	key := args[0].Bulk
 
 	SETsMu.RLock()
 	value, ok := SETs[key]
 	SETsMu.RUnlock()
 
 	if !ok {
-		return Value{typ: "null"}
+		return Value{Typ: "null"}
 	}
 
-	return Value{typ: "bulk", bulk: value}
+	return Value{Typ: "bulk", Bulk: value}
 }
 
 var HSETs = map[string]map[string]string{}
@@ -60,12 +60,12 @@ var HSETsMu = sync.RWMutex{}
 
 func hset(args []Value) Value {
 	if len(args) != 3 {
-		return Value{typ: "error", str: "ERR wrong number of arguments for 'hset' command"}
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'hset' command"}
 	}
 
-	hash := args[0].bulk
-	key := args[1].bulk
-	value := args[2].bulk
+	hash := args[0].Bulk
+	key := args[1].Bulk
+	value := args[2].Bulk
 
 	HSETsMu.Lock()
 	if _, ok := HSETs[hash]; !ok {
@@ -74,47 +74,47 @@ func hset(args []Value) Value {
 	HSETs[hash][key] = value
 	HSETsMu.Unlock()
 
-	return Value{typ: "string", str: "OK"}
+	return Value{Typ: "string", Str: "OK"}
 }
 
 func hget(args []Value) Value {
 	if len(args) != 2 {
-		return Value{typ: "error", str: "ERR wrong number of arguments for 'hget' command"}
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'hget' command"}
 	}
 
-	hash := args[0].bulk
-	key := args[1].bulk
+	hash := args[0].Bulk
+	key := args[1].Bulk
 
 	HSETsMu.RLock()
 	value, ok := HSETs[hash][key]
 	HSETsMu.RUnlock()
 
 	if !ok {
-		return Value{typ: "null"}
+		return Value{Typ: "null"}
 	}
 
-	return Value{typ: "bulk", bulk: value}
+	return Value{Typ: "bulk", Bulk: value}
 }
 func hgetall(args []Value) Value {
 	if len(args) != 1 {
-		return Value{typ: "error", str: "ERR wrong number of arguments for 'hgetall' command"}
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'hgetall' command"}
 	}
 
-	hash := args[0].bulk
+	hash := args[0].Bulk
 
 	HSETsMu.RLock()
 	value, ok := HSETs[hash]
 	HSETsMu.RUnlock()
 
 	if !ok {
-		return Value{typ: "null"}
+		return Value{Typ: "null"}
 	}
 
 	values := []Value{}
 	for k, v := range value {
-		values = append(values, Value{typ: "bulk", bulk: k})
-		values = append(values, Value{typ: "bulk", bulk: v})
+		values = append(values, Value{Typ: "bulk", Bulk: k})
+		values = append(values, Value{Typ: "bulk", Bulk: v})
 	}
 
-	return Value{typ: "array", array: values}
+	return Value{Typ: "array", Array: values}
 }
