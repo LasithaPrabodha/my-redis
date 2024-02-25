@@ -2,6 +2,8 @@
 
 This project implements a simplified version of a Redis-like server in Go, providing basic functionalities similar to Redis.
 
+![ezgif-1-21fadfcd2b](https://github.com/LasithaPrabodha/redis-like-server/assets/10921870/5555c2e3-8b01-439d-817f-a240f3355edc)
+
 ## Features
 
 - Handles TCP connections and processes incoming requests.
